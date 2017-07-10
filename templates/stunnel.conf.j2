@@ -1,0 +1,18 @@
+; **************************************************************************
+; * Global options                                                         *
+; **************************************************************************
+
+{% for option, value in stunnel_global_options.items() %}
+{{option}} = {{value}}
+{% endfor %}
+
+; **************************************************************************
+; * Service definitions                                                    *
+; **************************************************************************
+
+{% for service_name, service_options in stunnel_services.items() %}
+[{{service_name}}]
+{% for option, value in service_options.items() %}
+{{option}} = {{value}}
+{% endfor %}
+{% endfor %}

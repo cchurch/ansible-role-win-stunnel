@@ -1,0 +1,69 @@
+---
+
+- name: check if stunnel install dir registry key exists
+  win_reg_stat:
+    path: '{{stunnel_reg_path}}'
+    name: 'Install_Dir'
+  register: _stunnel_install_dir
+
+- block:
+
+    - name: create tempfile for stunnel installer
+      win_tempfile:
+        suffix: '.exe'
+        state: file
+      register: _stunnel_installer_tempfile
+      when: not _stunnel_install_dir.exists or stunnel_force_install
+
+    - name: download stunnel installer
+      win_get_url:
+        url: '{{stunnel_download_url}}'
+        dest: '{{_stunnel_installer_tempfile.path}}'
+      when: not _stunnel_install_dir.exists or stunnel_force_install
+
+    - name: run stunnel installer
+      win_command: '{{_stunnel_installer_tempfile.path}} /S'
+      when: not _stunnel_install_dir.exists or stunnel_force_install
+
+    - name: read stunnel registry keys
+      win_reg_stat:
+        path: '{{stunnel_reg_path}}'
+        name: 'Install_Dir'
+      register: _stunnel_install_dir2
+      failed_when: not _stunnel_install_dir2.exists
+      when: not _stunnel_install_dir.exists or stunnel_force_install
+
+    - name: store updated install dir
+      set_fact:
+        _stunnel_install_dir: '{{_stunnel_install_dir2}}'
+      when: not _stunnel_install_dir.exists or stunnel_force_install
+
+  always:
+
+    - name: remove stunnel installer tempfile
+      win_file:
+        path: '{{_stunnel_installer_tempfile.path}}'
+        state: absent
+      when: (_stunnel_installer_tempfile|default({},true)).path|default("",true)
+
+- name: update stunnel conf
+  win_template:
+    src: '{{stunnel_conf_template}}'
+    dest: '{{_stunnel_install_dir.value}}\config\stunnel.conf'
+    newline_sequence: '\r\n'
+  notify: restart stunnel
+
+- name: check if stunnel service is installed
+  win_service:
+    name: '{{stunnel_service_name}}'
+  register: _stunnel_service_installed
+  changed_when: false
+
+- name: install stunnel service if not installed
+  win_command: '"{{_stunnel_install_dir.value}}\bin\stunnel.exe" -install -quiet'
+  when: not _stunnel_service_installed.exists
+
+- name: ensure stunnel service is running
+  win_service:
+    name: '{{stunnel_service_name}}'
+    state: started

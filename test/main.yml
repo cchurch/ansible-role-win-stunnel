@@ -1,0 +1,6 @@
+---
+
+- name: TODO - test stunnel role
+  hosts: windows
+  roles:
+    - role: cchurch.win-stunnel

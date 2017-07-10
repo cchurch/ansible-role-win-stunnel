@@ -1,0 +1,6 @@
+---
+
+- name: restart stunnel
+  win_service:
+    name: '{{stunnel_service_name}}'
+    state: restarted

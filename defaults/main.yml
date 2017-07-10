@@ -1,0 +1,18 @@
+---
+
+stunnel_global_options: {}
+# option: value
+# option2: value2
+
+stunnel_services: {}
+# service_name:
+#   option: value
+#   option2: value2
+
+stunnel_conf_template: 'stunnel.conf.j2'
+
+stunnel_download_url: https://www.stunnel.org/downloads/stunnel-5.41-win32-installer.exe
+stunnel_force_install: false
+
+stunnel_reg_path: 'HKLM:\SOFTWARE\{% if ansible_architecture == "64-bit" %}WOW6432Node\{% endif %}NSIS_stunnel'
+stunnel_service_name: 'stunnel'
